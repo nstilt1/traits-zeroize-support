@@ -1,5 +1,9 @@
 use crate::{ParBlocks, ParBlocksSizeUser, StreamCipherError};
-use crypto_common::{array::Array, typenum::Unsigned, Block, BlockSizeUser, BlockSizes};
+use crypto_common::{
+    array::slice_as_chunks_mut,
+    typenum::Unsigned,
+    Block, BlockSizeUser, BlockSizes,
+};
 use inout::{InOut, InOutBuf};
 
 /// Trait implemented by stream cipher backends.
@@ -35,7 +39,7 @@ pub trait StreamClosure: BlockSizeUser {
 }
 
 /// Block-level synchronous stream ciphers.
-pub trait StreamCipherCore: BlockSizeUser + Sized {
+pub trait StreamCipherCore: BlockSizeUser + ParBlocksSizeUser + Sized {
     /// Return number of remaining blocks before cipher wraps around.
     ///
     /// Returns `None` if number of remaining blocks can not be computed
@@ -209,7 +213,7 @@ impl<'a, BS: BlockSizes> StreamClosure for WriteBlocksCtx<'a, BS> {
     #[inline(always)]
     fn call<B: StreamBackend<BlockSize = BS>>(self, backend: &mut B) {
         if B::ParBlocksSize::USIZE > 1 {
-            let (chunks, tail) = Array::slice_as_chunks_mut(self.blocks);
+            let (chunks, tail) = slice_as_chunks_mut(self.blocks);
             for chunk in chunks {
                 backend.gen_par_ks_blocks(chunk);
             }
@@ -267,9 +271,8 @@ impl<'inp, 'out, BS: BlockSizes> StreamClosure for ApplyBlocksCtx<'inp, 'out, BS
             }
         } else {
             for mut block in self.blocks {
-                let mut t = Default::default();
-                backend.gen_ks_block(&mut t);
-                block.xor_in2out(&t);
+                backend.gen_ks_block(&mut buf);
+                block.xor_in2out(&buf);
             }
         }
     }
