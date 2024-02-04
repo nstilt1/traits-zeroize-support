@@ -3,7 +3,9 @@ use crate::{
     StreamCipherSeek, StreamCipherSeekCore,
 };
 use core::fmt;
-use crypto_common::{typenum::Unsigned, Iv, IvSizeUser, Key, KeyInit, KeyIvInit, KeySizeUser, ParBlocks};
+use crypto_common::{
+    typenum::Unsigned, Iv, IvSizeUser, Key, KeyInit, KeyIvInit, KeySizeUser, ParBlocks,
+};
 use inout::InOutBuf;
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -14,7 +16,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 pub struct StreamCipherCoreWrapper<T: StreamCipherCore> {
     core: T,
     // First byte is used as position
-    // First block is used as a small buffer, the rest is to be used by 
+    // First block is used as a small buffer, the rest is to be used by
     // ApplyBlocksCtx
     buffer: ParBlocks<T>,
 }
@@ -149,7 +151,7 @@ impl<T: StreamCipherCore> StreamCipher for StreamCipherCoreWrapper<T> {
         }
 
         let (blocks, mut tail) = data.into_chunks();
-        
+
         let (chunks, mut tail_blocks) = blocks.into_chunks::<T::ParBlocksSize>();
 
         for mut chunk in chunks {
@@ -157,7 +159,8 @@ impl<T: StreamCipherCore> StreamCipher for StreamCipherCoreWrapper<T> {
             chunk.xor_in2out(&self.buffer);
         }
         let n = tail_blocks.len();
-        self.core.write_keystream_blocks(&mut self.buffer[..tail_blocks.len()]);
+        self.core
+            .write_keystream_blocks(&mut self.buffer[..tail_blocks.len()]);
         for i in 0..n {
             tail_blocks.get(i).xor_in2out(&self.buffer[i]);
         }

@@ -1,8 +1,6 @@
 use crate::{ParBlocks, ParBlocksSizeUser, StreamCipherError};
 use crypto_common::{
-    array::slice_as_chunks_mut,
-    typenum::Unsigned,
-    Block, BlockSizeUser, BlockSizes,
+    array::slice_as_chunks_mut, typenum::Unsigned, Block, BlockSizeUser, BlockSizes,
 };
 use inout::{InOut, InOutBuf};
 
